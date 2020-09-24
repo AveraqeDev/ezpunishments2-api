@@ -5,24 +5,25 @@ install:
 	  poetry install
 
 format:
-	  $(POETRY_RUN) black.
+	  $(POETRY_RUN) black .
 
 lint:
 	  $(POETRY_RUN) flake8 .
 
 test: format lint
-	  $(POETRY_RUN) honcho -e .env-test run coverage run manage.py test
-		$(POETRY_RUN) coverage report -m --fail-under=88
-		$(POETRY_RUN) coverage html
+	  $(POETRY_RUN) ${HONCHO_RUN} test
 
-start:
-	  $(POETRY_RUN) honcho -e .env start
+wait_for_db:
+		$(POETRY_RUN) $(HONCHO_RUN) wait_for_db
 
 migrate:
 	  $(POETRY_RUN) $(HONCHO_RUN) migrate
 
 makemigrations:
 	  $(POETRY_RUN) $(HONCHO_RUN) makemigrations $(ARGS)
+
+start: wait_for_db migrate
+		$(POETRY_RUN) $(HONCHO_RUN) runserver
 
 shell:
 	  $(POETRY_RUN) $(HONCHO_RUN) shell
@@ -35,5 +36,6 @@ db-reset:
 		createdb -U postgres ezpunishments2
 
 db: db-reset migrate
+	  echo "from django.contrib.auth import get_user_model; get_user_model().objects.create_superuser('smiileyface', 'Testpass123')" | $(POETRY_RUN) $(HONCHO_RUN) shell
 
-.PHONY: install test format lint start migrate makemigrations shell manage db-reset db
+.PHONY: install format lint test wait_for_db migrate makemigrations start shell manage db-reset db

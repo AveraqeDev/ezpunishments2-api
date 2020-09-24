@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.utils.timezone import make_aware
 
 from ezpunishments.core import models
 
@@ -62,13 +63,15 @@ class ModelTests(TestCase):
         self.assertEqual(
             punishment.punished_by_uuid, "c6edbd5a24aa440d918a1e299b22e5f9"
         ),
-        self.assertTrue(punishment.active)
-        self.assertEqual(punishment.expires, expires)
+        self.assertTrue(punishment.is_active)
+        self.assertEqual(punishment.expires, make_aware(expires))
 
     def test_create_new_punishment_missing_field(self):
         """Test creating a new punishment missing a required field fails"""
         with self.assertRaises(ValueError):
-            models.PermissionsMixin.objects.create(punished_by="smiileyface")
+            models.Punishment.objects.create(
+                mc_username=None, reason=None, punished_by="smiileyface", expires=None
+            )
 
     def test_create_new_punishment_invalid_username(self):
         """Test creating a new punishment with invalid MC username fails"""

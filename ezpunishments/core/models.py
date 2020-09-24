@@ -4,6 +4,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
+from django.utils.timezone import make_aware
 
 import requests
 
@@ -51,3 +52,47 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = "username"
+
+
+class PunishmentManager(models.Manager):
+    def create(self, mc_username, reason, punished_by, expires, **extra_fields):
+        """Creates and saves a new Punishment"""
+        if not mc_username or not reason or not punished_by or not expires:
+            raise ValueError(
+                "Punishments must have user, reason, punished by and expires fields"
+            )
+        mc_uuid = get_mc_uuid(mc_username)
+        punished_by_uuid = get_mc_uuid(punished_by)
+        if not expires.tzinfo:
+            expires = make_aware(expires)
+        punishment = self.model(
+            mc_username=mc_username,
+            mc_uuid=mc_uuid,
+            reason=reason,
+            punished_by=punished_by,
+            punished_by_uuid=punished_by_uuid,
+            expires=expires,
+            **extra_fields,
+        )
+        punishment.save(using=self._db)
+
+        return punishment
+
+
+class Punishment(models.Model):
+    """Punishment object"""
+
+    mc_username = models.CharField(max_length=16)
+    mc_uuid = models.CharField(max_length=255)
+    reason = models.CharField(max_length=255)
+    proof = models.CharField(max_length=255, null=True)
+    punished_by = models.CharField(max_length=16)
+    punished_by_uuid = models.CharField(max_length=255)
+    removed_by = models.CharField(max_length=16, null=True, default=None)
+    removed_by_uuid = models.CharField(max_length=255, null=True, default=None)
+    is_active = models.BooleanField(default=True)
+    expires = models.DateTimeField()
+    date_punished = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now_add=True)
+
+    objects = PunishmentManager()

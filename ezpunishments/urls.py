@@ -19,4 +19,5 @@ from django.urls import path, include
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/user/", include("ezpunishments.user.urls")),
+    path("/api/punishment/", include("ezpunishments.punishment.urls")),
 ]

@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "ezpunishments.core",
     "ezpunishments.user",
+    "ezpunishments.punishment",
 ]
 
 MIDDLEWARE = [
